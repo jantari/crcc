@@ -9,12 +9,11 @@ int increment_binary (char* currentBinaryNum, int bitLength);
 
 int main (int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Too few arguments. Provide amount of bits.\n");
+        printf("Too few arguments. Usage:\ncrcc_stat (amount of bits) [f]\n\nAdding the 'f' flag will output to a file instead of stdout.\n");
         return -1;
     }
 
     _Bool printToFile = 0;
-
     for (int i = argc - 1; i > 0; i--) {
         if (*argv[i] == 'f') {
             printToFile = 1;
@@ -26,8 +25,9 @@ int main (int argc, char *argv[]) {
     bitLength += 4;
     int crcmask_len = strlen(CRC4_MASK);
 
-    char *currentBinaryNum = malloc((bitLength + 1) * sizeof(char));
-    char *checksumCalcBuffer = malloc((bitLength + 1) * sizeof(char));
+    /* malloc yet one more byte for \0 marker */
+    char *currentBinaryNum = malloc(bitLength * sizeof(char) + 1);
+    char *checksumCalcBuffer = malloc(bitLength * sizeof(char) + 1);
     for (int i = 0; i < bitLength; i++) {
         currentBinaryNum[i] = '0';
         checksumCalcBuffer[i] = '0';

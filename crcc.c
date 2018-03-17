@@ -8,8 +8,8 @@
 int main (int argc, char *argv[]) {
 
     if (argc < 2) {
-        printf("Not enough arguments.\n");
-        return 1;
+        printf("Too few arguments.\n");
+        return -1;
     }
 
     int input_len = strlen(argv[1]);
@@ -19,13 +19,12 @@ int main (int argc, char *argv[]) {
     /* input check */
     if (input_len < crcmask_len) {
         printf("Input shorter than CRC mask.\n");
-        return 1;
+        return -2;
     }
 
     /* j is the position of the first 1 in the string */
     while (j <= input_len - crcmask_len) {
         if (argv[1][j] == '1') {
-
             for (int i = 0; i < crcmask_len; i++) {
                 argv[1][j] = argv[1][j] XOR CRC4_MASK[i] ? '1' : '0';
                 j++;
