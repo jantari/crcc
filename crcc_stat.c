@@ -13,13 +13,6 @@ int main (int argc, char *argv[]) {
         return -1;
     }
 
-    _Bool printToFile = 0;
-    for (int i = argc - 1; i > 0; i--) {
-        if (*argv[i] == 'f') {
-            printToFile = 1;
-        }
-    }
-
     int bitLength = atoi(argv[1]);
     /* plus 4 for the CRC states */
     bitLength += 4;
@@ -36,52 +29,46 @@ int main (int argc, char *argv[]) {
     checksumCalcBuffer[bitLength] = '\0';
     printf("Allocated %d Bytes of memory.\n", bitLength * 2 + 2);
 
-    FILE *outfile = fopen("out.txt", "w");
-    if (outfile == NULL) {
-        printf("Error opening file!\n");
-        return -2;
+    FILE *outputStream = stdout;
+    if (argc > 2 && *argv[2] == 'f') {
+        outputStream = fopen("out.txt", "w");
+        if (outputStream == NULL) {
+            printf("Error opening output file!\n");
+            return -2;
+        }
     }
+
+    int j = 0;
 
     while (increment_binary(currentBinaryNum, bitLength - 5) == 1) {
         strcpy(checksumCalcBuffer, currentBinaryNum);
-        int j = 0;
+        j = 0;
 
         /* input check */
         if (bitLength < crcmask_len) {
             printf("Input: %s is shorter than CRC mask.\n", currentBinaryNum);
         } else {
-            if (printToFile == 1) {
-                fprintf(outfile, "{'Input':%s,", currentBinaryNum);
-            } else {
-                printf("{'Input':%s,", currentBinaryNum);
-            }
+            fprintf(outputStream, "{'Input':%s,", currentBinaryNum);
+
             /* j is the position of the first 1 in the string */
             while (j <= bitLength - crcmask_len) {
                 if (checksumCalcBuffer[j] == '1') {
-
                     for (int i = 0; i < crcmask_len; i++) {
                         checksumCalcBuffer[j] = checksumCalcBuffer[j] XOR CRC4_MASK[i] ? '1' : '0';
                         j++;
                     }
-                    j = 0;
+                    /* Reset j to the position before what was currently changed so we don't have to traverse the whole string to find the next '1' */
+                    j = j - crcmask_len;
                 } else {
                     j++;
                 }
             }
 
-            if (printToFile == 1) {
-                fprintf(outfile, "'Checksum':'");
-                while (j < bitLength) {
-                    fprintf(outfile, "%c", checksumCalcBuffer[j++]);
-                }
-                fprintf(outfile, "'}\n");
-            } else {
-                printf("'Checksum':'");
-                while (j < bitLength) {
-                    putchar(checksumCalcBuffer[j++]);
-                }
-                printf("'}\n");
+            fprintf(outputStream, "'Checksum':'");
+            while (j < bitLength) {
+                fprintf(outputStream, "%c", checksumCalcBuffer[j++]);
             }
+            fprintf(outputStream, "'}\n");
         }
     }
 
@@ -93,6 +80,7 @@ int main (int argc, char *argv[]) {
 int increment_binary (char* currentBinaryNum, int bitLength) {
     /* find position of last 0 in char array */
     int lastZero = 0;
+
     for (int i = bitLength; i >= 0; i--) {
         if (currentBinaryNum[i] == '0') {
             lastZero = i;
